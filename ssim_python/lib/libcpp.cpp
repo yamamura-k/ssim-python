@@ -206,34 +206,34 @@ torch::Tensor  _ssim_batch_full(torch::Tensor images, torch::Tensor window, int 
 }
 
 
-// torch::Tensor _ssim_batch_hybrid(torch::Tensor images, torch::Tensor window, int window_size, int channel, int q_matrix_threshold) {
-//     int n_candidates = images.size(0);
-//     torch::Tensor similarity;
-//     if (n_candidates > q_matrix_threshold) {
-//         similarity = torch::zeros({n_candidates, n_candidates});
-//         for(ssize_t i = 1; i < n_candidates; ++i) {
-//             torch::Tensor _base_bbox = images.index({i}).unsqueeze(0);
-//             similarity.index_put_(
-//                 {i, Idx::Slice(0, i, Idx::None)}, 
-//                 _ssim(
-//                     _base_bbox,
-//                     images.index({Idx::Slice(0, i, Idx::None)}),
-//                     window,
-//                     window_size,
-//                     channel
-//                 )
-//             );
-//         }
-//         similarity = similarity + similarity.permute({1, 0});
-//     } else {
-//         similarity = _ssim_batch_full(images, window, window_size);
-//     }
-//     return similarity;
-// }
+torch::Tensor _ssim_batch_hybrid(torch::Tensor images, torch::Tensor window, int window_size, int channel, int q_matrix_threshold) {
+    int n_candidates = images.size(0);
+    torch::Tensor similarity;
+    if (n_candidates > q_matrix_threshold) {
+        similarity = torch::zeros({n_candidates, n_candidates});
+        for(ssize_t i = 1; i < n_candidates; ++i) {
+            torch::Tensor _base_bbox = images.index({i}).unsqueeze(0);
+            similarity.index_put_(
+                {i, Idx::Slice(0, i, Idx::None)}, 
+                _ssim(
+                    _base_bbox,
+                    images.index({Idx::Slice(0, i, Idx::None)}),
+                    window,
+                    window_size,
+                    channel
+                )
+            );
+        }
+        similarity = similarity + similarity.permute({1, 0});
+    } else {
+        similarity = _ssim_batch_full(images, window, window_size);
+    }
+    return similarity;
+}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("ssim_batch_recursive", &_ssim_batch_recursive, "_ssim_batch_recursive");
   m.def("ssim_batch_recursive_put", &_ssim_batch_recursive_put, "_ssim_batch_recursive_put");
   m.def("ssim_batch_full", &_ssim_batch_full, "_ssim_batch_full");
-//   m.def("ssim_batch_hybrid", &_ssim_batch_hybrid, "_ssim_batch_hybrid");
+  m.def("ssim_batch_hybrid", &_ssim_batch_hybrid, "_ssim_batch_hybrid");
 }
