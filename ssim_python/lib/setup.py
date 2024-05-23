@@ -18,11 +18,3 @@ ext = Extension(
 )
 setup(name="lib_cython_2", ext_modules=cythonize([ext]))
 
-from setuptools import Extension, setup
-from torch.utils import cpp_extension
-
-setup(
-    name="libcpp",
-    ext_modules=[cpp_extension.CppExtension("libcpp", ["libcpp.cpp"])],
-    cmdclass={"build_ext": cpp_extension.BuildExtension},
-)
