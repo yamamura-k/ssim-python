@@ -656,19 +656,20 @@ torch::Tensor _ssim_batch_recursive_interface(
     if (size <= q_matrix_threshold) {
         return _ssim_batch_full(images, window, window_size);
     } else {
+        int q2 = 10;
         switch (mode) {
             case 0:
-                return _ssim_batch_recursive(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
+                return _ssim_batch_recursive(images, 0, size, 0, size, q2, window, window_size);
             case 1:
-                return _ssim_batch_recursive_new1(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
+                return _ssim_batch_recursive_new1(images, 0, size, 0, size, q2, window, window_size);
             case 2:
-                return _ssim_batch_recursive_new2(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
+                return _ssim_batch_recursive_new2(images, 0, size, 0, size, q2, window, window_size);
             case 3:
-                return _ssim_batch_recursive_new3(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
+                return _ssim_batch_recursive_new3(images, 0, size, 0, size, q2, window, window_size);
             case 4:
-                return _ssim_batch_recursive_new4(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
+                return _ssim_batch_recursive_new4(images, 0, size, 0, size, q2, window, window_size);
             default:
-                return _ssim_batch_recursive_new3(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
+                return _ssim_batch_recursive_new3(images, 0, size, 0, size, q2, window, window_size);
         }
     }
 }
