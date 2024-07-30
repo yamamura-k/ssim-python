@@ -1,10 +1,20 @@
 import gc
 import numpy as np
 import torch
-from libcpp import ssim_batch_recursive, ssim_batch_recursive_put, ssim_batch_full#, ssim_batch_hybrid
+from libcpp import (
+    ssim_batch_recursive,
+    ssim_batch_recursive_put,
+    ssim_batch_full,
+    ssim_batch_hybrid,
+)
 
-from ssim_python import (_ssim_batch_full, _ssim_batch_hybrid,
-                         _ssim_batch_recursive, create_window)
+from ssim_python import (
+    _ssim_batch_full,
+    _ssim_batch_hybrid,
+    _ssim_batch_recursive,
+    create_window,
+)
+
 # from ssim_python.lib.lib_cython_2 import (_ssim_batch_full, _ssim_batch_hybrid,
 #                                           _ssim_batch_recursive, create_window)
 
@@ -35,6 +45,7 @@ def set_diag(matrix, value):
         matrix[i, i] = value
     return matrix
 
+
 def test_all_gpu():
     torch.set_num_threads(4)
 
@@ -51,10 +62,10 @@ def test_all_gpu():
         window = create_window(window_size, n_channels).to(device)
         s_full = stopwatch(_ssim_batch_full)
         s_full_t = stopwatch(ssim_batch_full)
-        
+
         s_hybrid = stopwatch(_ssim_batch_hybrid)
-        # s_hybrid_t = stopwatch(ssim_batch_hybrid)
-        
+        s_hybrid_t = stopwatch(ssim_batch_hybrid)
+
         s_recursive = stopwatch(_ssim_batch_recursive)
         s_recursive_t = stopwatch(ssim_batch_recursive)
         s_recursive_p = stopwatch(ssim_batch_recursive_put)
@@ -62,7 +73,9 @@ def test_all_gpu():
         similarity_f = set_diag(s_full(images, window, window_size), 0)
         similarity_h = set_diag(s_hybrid(images, window, window_size, n_channels, 0), 0)
         similarity_f_t = set_diag(s_full_t(images, window, window_size), 0)
-        # similarity_h_t = set_diag(s_hybrid_t(images, window, window_size, n_channels, 0), 0)
+        similarity_h_t = set_diag(
+            s_hybrid_t(images, window, window_size, n_channels, 0), 0
+        )
         similarity_r = set_diag(
             s_recursive(images, 0, n_images, 0, n_images, R1, window, window_size), 0
         )
@@ -103,11 +116,12 @@ def test_all_gpu():
             ),
             0,
         )
-        assert(calc_diff(similarity_f, similarity_h) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_f_t) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_r) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_r_2) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_rt_1) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_rt_2) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_rp_1) < 1e-5)
-        assert(calc_diff(similarity_f, similarity_rp_2) < 1e-5)
+        assert calc_diff(similarity_f, similarity_h) < 1e-5
+        assert calc_diff(similarity_f, similarity_f_t) < 1e-5
+        assert calc_diff(similarity_f, similarity_r) < 1e-5
+        assert calc_diff(similarity_f, similarity_r_2) < 1e-5
+        assert calc_diff(similarity_f, similarity_rt_1) < 1e-5
+        assert calc_diff(similarity_f, similarity_rt_2) < 1e-5
+        assert calc_diff(similarity_f, similarity_rp_1) < 1e-5
+        assert calc_diff(similarity_f, similarity_rp_2) < 1e-5
+        assert calc_diff(similarity_f, similarity_h_t) < 1e-5

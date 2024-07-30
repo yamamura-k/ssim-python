@@ -59,6 +59,7 @@ def _ssim(
     else:
         return ssim_map.mean(1).mean(1).mean(1).cpu().numpy()
 
+
 @profile
 def _ssim_batch_full(images, window, window_size: int = 11):
     (bs, channel, width, height) = images.size()
@@ -89,6 +90,7 @@ def _ssim_batch_full(images, window, window_size: int = 11):
     # ssim_matrix[range(bs), range(bs)] = 0.0
     return ssim_matrix.cpu().numpy()
 
+
 @profile
 def _ssim_batch_hybrid(images, window, window_size, channel, q_matrix_threshold=100):
     n_candidates = len(images)
@@ -108,6 +110,7 @@ def _ssim_batch_hybrid(images, window, window_size, channel, q_matrix_threshold=
     else:  # 行列を分解して計算するのもあり
         similarity = _ssim_batch_full(images, window, window_size=window_size)
     return similarity
+
 
 @profile
 def _ssim_batch_recursive(
