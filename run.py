@@ -18,7 +18,7 @@ def stopwatch(func):
         start = time.time()
         for _ in range(10):
             result = func(*args, **kwargs)
-        print(f"{func.__name__} took {time.time() - start} seconds")
+        print(f"{func.__name__:<25}: {time.time() - start:.5f} seconds")
         return result
 
     return wrapper
@@ -41,33 +41,39 @@ device = "cuda:0"
 window_size = 11
 W = 64
 H = 64
-R1 = 100
-R2 = 75
+# R1 = 100
+# R2 = 75
+R1 = 50
+R2 = 25
 with torch.no_grad():
-    images = torch.rand(300, 3, W, H, device=device)
+    # images = torch.rand(300, 3, W, H, device=device)
+    images = torch.rand(100, 3, W, H, device=device)
     n_images = images.size(0)
     n_channels = images.size(1)
     window = create_window(window_size, n_channels).to(device)
     s_full = stopwatch(_ssim_batch_full)
-    s_full_t = stopwatch(ssim_batch_full)
-    
     s_hybrid = stopwatch(_ssim_batch_hybrid)
-    s_hybrid_t = stopwatch(ssim_batch_hybrid)
-    
     s_recursive = stopwatch(_ssim_batch_recursive)
+
+    print("-"*10 + " Python Implementation " + "-"*10)
+    s_full_t = stopwatch(ssim_batch_full)
+    s_hybrid_t = stopwatch(ssim_batch_hybrid)
     s_recursive_t = stopwatch(ssim_batch_recursive)
     s_recursive_p = stopwatch(ssim_batch_recursive_put)
 
     similarity_f = set_diag(s_full(images, window, window_size), 0)
     similarity_h = set_diag(s_hybrid(images, window, window_size, n_channels, 0), 0)
-    similarity_f_t = set_diag(s_full_t(images, window, window_size), 0)
-    similarity_h_t = set_diag(s_hybrid_t(images, window, window_size, n_channels, 0), 0)
     similarity_r = set_diag(
         s_recursive(images, 0, n_images, 0, n_images, R1, window, window_size), 0
     )
     similarity_r_2 = set_diag(
         s_recursive(images, 0, n_images, 0, n_images, R2, window, window_size), 0
     )
+
+    print()
+    print("-"*10 + " C++ Implementation " + "-"*10)
+    similarity_f_t = set_diag(s_full_t(images, window, window_size), 0)
+    similarity_h_t = set_diag(s_hybrid_t(images, window, window_size, n_channels, 0), 0)
     similarity_rt_1 = set_diag(
         s_recursive_t(images, 0, n_images, 0, n_images, R1, window, window_size), 0
     )
@@ -102,6 +108,7 @@ with torch.no_grad():
         ),
         0,
     )
+    print()
     assert(calc_diff(similarity_f, similarity_h) < 1e-5)
     assert(calc_diff(similarity_f, similarity_f_t) < 1e-5)
     assert(calc_diff(similarity_f, similarity_r) < 1e-5)
