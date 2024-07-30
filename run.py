@@ -1,7 +1,7 @@
 import gc
 import numpy as np
 import torch
-from libcpp import ssim_batch_recursive, ssim_batch_recursive_put, ssim_batch_full, ssim_batch_hybrid
+from libcpp import ssim_batch_recursive, ssim_batch_recursive_new1, ssim_batch_recursive_new2, ssim_batch_recursive_put, ssim_batch_full, ssim_batch_hybrid
 
 from ssim_python import (_ssim_batch_full, _ssim_batch_hybrid,
                          _ssim_batch_recursive, create_window)
@@ -55,12 +55,14 @@ with torch.no_grad():
     s_hybrid = stopwatch(_ssim_batch_hybrid)
     s_recursive = stopwatch(_ssim_batch_recursive)
 
-    print("-"*10 + " Python Implementation " + "-"*10)
     s_full_t = stopwatch(ssim_batch_full)
     s_hybrid_t = stopwatch(ssim_batch_hybrid)
     s_recursive_t = stopwatch(ssim_batch_recursive)
+    s_recursive_n1 = stopwatch(ssim_batch_recursive_new1)
+    s_recursive_n2 = stopwatch(ssim_batch_recursive_new2)
     s_recursive_p = stopwatch(ssim_batch_recursive_put)
 
+    print("-"*10 + " Python Implementation " + "-"*10)
     similarity_f = set_diag(s_full(images, window, window_size), 0)
     similarity_h = set_diag(s_hybrid(images, window, window_size, n_channels, 0), 0)
     similarity_r = set_diag(
@@ -79,6 +81,18 @@ with torch.no_grad():
     )
     similarity_rt_2 = set_diag(
         s_recursive_t(images, 0, n_images, 0, n_images, R2, window, window_size), 0
+    )
+    similarity_rn1_1 = set_diag(
+        s_recursive_n1(images, 0, n_images, 0, n_images, R1, window, window_size), 0
+    )
+    similarity_rn1_2 = set_diag(
+        s_recursive_n1(images, 0, n_images, 0, n_images, R2, window, window_size), 0
+    )
+    similarity_rn2_1 = set_diag(
+        s_recursive_n2(images, 0, n_images, 0, n_images, R1, window, window_size), 0
+    )
+    similarity_rn2_2 = set_diag(
+        s_recursive_n2(images, 0, n_images, 0, n_images, R2, window, window_size), 0
     )
     similarity_rp_1 = set_diag(
         s_recursive_p(
@@ -116,5 +130,9 @@ with torch.no_grad():
     assert(calc_diff(similarity_f, similarity_r_2) < 1e-5)
     assert(calc_diff(similarity_f, similarity_rt_1) < 1e-5)
     assert(calc_diff(similarity_f, similarity_rt_2) < 1e-5)
+    assert(calc_diff(similarity_f, similarity_rn1_1) < 1e-5)
+    assert(calc_diff(similarity_f, similarity_rn2_1) < 1e-5)
+    assert(calc_diff(similarity_f, similarity_rn1_2) < 1e-5)
+    assert(calc_diff(similarity_f, similarity_rn2_2) < 1e-5)
     assert(calc_diff(similarity_f, similarity_rp_1) < 1e-5)
     assert(calc_diff(similarity_f, similarity_rp_2) < 1e-5)
