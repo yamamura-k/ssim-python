@@ -547,7 +547,7 @@ torch::Tensor _ssim_batch_recursive_put2(
         F::conv2d(images.pow(2), window, F::Conv2dFuncOptions().padding(window_size / 2).groups(channel))
         - mu.pow(2)
     );
-    return _ssim_batch_recursive_put2_subroutine(similarity, images, mu, sigma_sq, l1, r1, l2, r2, q_matrix_threshold, window, window_size);
+    return _ssim_batch_recursive_put2_subroutine(similarity, mu, sigma_sq, images, l1, r1, l2, r2, q_matrix_threshold, window, window_size);
 }
 
 
@@ -658,10 +658,6 @@ torch::Tensor _ssim_batch_recursive_interface(
                 return _ssim_batch_recursive_new3(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
             case 4:
                 return _ssim_batch_recursive_new4(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
-            case 5:
-                return _ssim_batch_recursive_put(torch::zeros((size, size), torch::TensorOptions().device(images.device())), images, 0, size, 0, size, q_matrix_threshold, window, window_size);
-            case 6:
-                return _ssim_batch_recursive_put2(torch::zeros((size, size), torch::TensorOptions().device(images.device())), images, 0, size, 0, size, q_matrix_threshold, window, window_size);
             default:
                 return _ssim_batch_recursive_new3(images, 0, size, 0, size, q_matrix_threshold, window, window_size);
         }
@@ -669,6 +665,8 @@ torch::Tensor _ssim_batch_recursive_interface(
 }
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("ssim_batch_recursive", &_ssim_batch_recursive_interface, "_ssim_batch_recursive_interface");
+  m.def("ssim_batch_recursive_put", &_ssim_batch_recursive_put, "_ssim_batch_recursive_put");
+  m.def("ssim_batch_recursive_put2", &_ssim_batch_recursive_put2, "_ssim_batch_recursive_put2");
   m.def("ssim_batch_full", &_ssim_batch_full, "_ssim_batch_full");
   m.def("ssim_batch_hybrid", &_ssim_batch_hybrid, "_ssim_batch_hybrid");
 }
