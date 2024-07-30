@@ -580,8 +580,8 @@ torch::Tensor _ssim(
         - mu1_mu2
     );
 
-    float C1 = 0.01 * 0.01;
-    float C2 = 0.03 * 0.03;
+    float C1 = 0.0001; // 0.01 * 0.01
+    float C2 = 0.0009; // 0.03 * 0.03
 
     torch::Tensor ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / (
         (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
@@ -613,8 +613,8 @@ torch::Tensor  _ssim_batch_full(torch::Tensor images, torch::Tensor window, int 
     );
     mu1_mu2 = mu1_mu2.view({bs, bs, channel, width, height});
     sigma12 = sigma12.view({bs, bs, channel, width, height});
-    float C1 = 0.01 * 0.01;
-    float C2 = 0.03 * 0.03;
+    float C1 = 0.0001; // 0.01 * 0.01
+    float C2 = 0.0009; // 0.03 * 0.03
     torch::Tensor ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / (
         (mu_sq.unsqueeze(0) + mu_sq.unsqueeze(1) + C1)
         * (sigma_sq.unsqueeze(0) + sigma_sq.unsqueeze(1) + C2)
