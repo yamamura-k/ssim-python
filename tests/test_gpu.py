@@ -83,10 +83,10 @@ def test_all_gpu():
             s_recursive(images, 0, n_images, 0, n_images, R2, window, window_size), 0
         )
         similarity_rt_1 = set_diag(
-            s_recursive_t(images, 0, n_images, 0, n_images, R1, window, window_size), 0
+            s_recursive_t(images, 0, n_images, 0, n_images, R1, window, window_size, 3), 0
         )
         similarity_rt_2 = set_diag(
-            s_recursive_t(images, 0, n_images, 0, n_images, R2, window, window_size), 0
+            s_recursive_t(images, 0, n_images, 0, n_images, R2, window, window_size, 3), 0
         )
         similarity_rp_1 = set_diag(
             s_recursive_p(
