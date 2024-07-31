@@ -486,7 +486,7 @@ torch::Tensor _ssim_batch_recursive_put(
     return similarity;
 }
 torch::Tensor _ssim_batch_recursive_put2_subroutine(
-    torch::Tensor similarity, torch::Tensor mu, torch::Tensor sigma, torch::Tensor images, int l1, int r1, int l2, int r2, int q_matrix_threshold, torch::Tensor window, int half_window_size
+    torch::Tensor similarity, torch::Tensor mu, torch::Tensor sigma, torch::Tensor images, int l1, int r1, int l2, int r2, int lo, int ro, int q_matrix_threshold, torch::Tensor window, int half_window_size, bool flag
 ) {
     int length1 = r1 - l1;
     int length2 = r2 - l2;
@@ -494,17 +494,20 @@ torch::Tensor _ssim_batch_recursive_put2_subroutine(
         int m1 = (l1 + r1) / 2;
         int m2 = (l2 + r2) / 2;
         _ssim_batch_recursive_put2_subroutine(
-            similarity, mu, sigma, images, l1, m1, l2, m2, q_matrix_threshold, window, half_window_size
+            similarity, mu, sigma, images, l1, m1, l2, m2, 0, 0, q_matrix_threshold, window, half_window_size, false
         );
         _ssim_batch_recursive_put2_subroutine(
-            similarity, mu, sigma, images, m1, r1, m2, r2, q_matrix_threshold, window, half_window_size
+            similarity, mu, sigma, images, m1, r1, m2, r2, 0, 0, q_matrix_threshold, window, half_window_size, false
         );
+        bool flg = (l1 == l2);
         _ssim_batch_recursive_put2_subroutine(
-            similarity, mu, sigma, images, m1, r1, l2, m2, q_matrix_threshold, window, half_window_size
+            similarity, mu, sigma, images, m1, r1, l2, m2, l1, r2, q_matrix_threshold, window, half_window_size, flg
         );
-        _ssim_batch_recursive_put2_subroutine(
-            similarity, mu, sigma, images, l1, m1, m2, r2, q_matrix_threshold, window, half_window_size
-        );
+        if (!flg) {
+            _ssim_batch_recursive_put2_subroutine(
+                similarity, mu, sigma, images, l1, m1, m2, r2, 0, 0, q_matrix_threshold, window, half_window_size, false
+            );
+        }
     } else {
         torch::Tensor images1 = images.index({Idx::Slice(l1, r1, Idx::None)});
         torch::Tensor images2 = images.index({Idx::Slice(l2, r2, Idx::None)});
@@ -538,9 +541,12 @@ torch::Tensor _ssim_batch_recursive_put2_subroutine(
         torch::Tensor ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / (
             (mu1_sq.unsqueeze(1) + mu2_sq.unsqueeze(0) + C1)
             * (sigma1_sq.unsqueeze(1) + sigma2_sq.unsqueeze(0) + C2)
-        );
+        ).mean(-1).mean(-1).mean(-1);
 
-        similarity.index_put_({Idx::Slice(l1, r1, Idx::None), Idx::Slice(l2, r2, Idx::None)}, ssim_map.mean(-1).mean(-1).mean(-1));
+        similarity.index_put_({Idx::Slice(l1, r1, Idx::None), Idx::Slice(l2, r2, Idx::None)}, ssim_map);
+        if (flag) {
+            similarity.index_put_({Idx::Slice(lo, l1, Idx::None), Idx::Slice(r2, ro, Idx::None)}, ssim_map.permute({1, 0}));
+        }
     }
     return similarity;
 }
@@ -554,7 +560,7 @@ torch::Tensor _ssim_batch_recursive_put2(
         F::conv2d(images.pow(2), window, F::Conv2dFuncOptions().padding(half_window_size).groups(channel))
         - mu.pow(2)
     );
-    return _ssim_batch_recursive_put2_subroutine(similarity, mu, sigma_sq, images, l1, r1, l2, r2, q_matrix_threshold, window, half_window_size);
+    return _ssim_batch_recursive_put2_subroutine(similarity, mu, sigma_sq, images, l1, r1, l2, r2, 0, 0, q_matrix_threshold, window, half_window_size, false);
 }
 
 
@@ -653,9 +659,7 @@ torch::Tensor _ssim_batch_hybrid(torch::Tensor images, torch::Tensor window, int
 torch::Tensor _ssim_batch_recursive_interface(
     torch::Tensor images, int size, int q_matrix_threshold, torch::Tensor window, int window_size, int mode
 ) {
-    if (size <= q_matrix_threshold) {
-        return _ssim_batch_full(images, window, window_size);
-    } else {
+    if (size > q_matrix_threshold) { // best threshold is around 15 or 120 on RTX3090 GPU
         int q2 = 10;
         switch (mode) {
             case 0:
@@ -668,15 +672,20 @@ torch::Tensor _ssim_batch_recursive_interface(
                 return _ssim_batch_recursive_new3(images, 0, size, 0, size, q2, window, window_size);
             case 4:
                 return _ssim_batch_recursive_new4(images, 0, size, 0, size, q2, window, window_size);
+            case 5:
+                return _ssim_batch_recursive_put(torch::zeros({size, size}, torch::TensorOptions().device(images.device())), images, 0, size, 0, size, q2, window, window_size);
+            case 6:
+                return _ssim_batch_recursive_put2(torch::zeros({size, size}, torch::TensorOptions().device(images.device())), images, 0, size, 0, size, q2, window, window_size);
             default:
                 return _ssim_batch_recursive_new3(images, 0, size, 0, size, q2, window, window_size);
         }
+    } else {
+        return _ssim_batch_full(images, window, window_size);
     }
 }
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("ssim_batch_recursive", &_ssim_batch_recursive_interface, "_ssim_batch_recursive_interface");
   m.def("ssim_batch_recursive_put", &_ssim_batch_recursive_put, "_ssim_batch_recursive_put");
-  m.def("ssim_batch_recursive_put2", &_ssim_batch_recursive_put2, "_ssim_batch_recursive_put2");
   m.def("ssim_batch_full", &_ssim_batch_full, "_ssim_batch_full");
   m.def("ssim_batch_hybrid", &_ssim_batch_hybrid, "_ssim_batch_hybrid");
 }
