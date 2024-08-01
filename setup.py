@@ -10,16 +10,16 @@ setup(
     ext_modules=cythonize(
         [
             Extension(
-                "lib_cython_0", sources=["lib_cython_0.pyx"], include_dirs=[".", get_include()]
+                "lib_cython_0", sources=["ssim_python/lib/lib_cython_0.pyx"], include_dirs=[".", get_include()]
             ),
             Extension(
-                "lib_cython_1", sources=["lib_cython_1.pyx"], include_dirs=[".", get_include()]
+                "lib_cython_1", sources=["ssim_python/lib/lib_cython_1.pyx"], include_dirs=[".", get_include()]
             ),
             Extension(
-                "lib_cython_2", sources=["lib_cython_2.pyx"], include_dirs=[".", get_include()]
+                "lib_cython_2", sources=["ssim_python/lib/lib_cython_2.pyx"], include_dirs=[".", get_include()]
             ),
         ]
-    ) + [cpp_extension.CppExtension("libcpp", ["libcpp.cpp"], include_dirs=[cpp_extension.include_paths()])],
+    ) + [cpp_extension.CppExtension("libcpp", ["ssim_python/lib/libcpp.cpp"], include_dirs=[cpp_extension.include_paths()])],
     cmdclass={"build_ext": cpp_extension.BuildExtension},
 )
 
