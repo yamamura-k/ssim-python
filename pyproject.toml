@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ssim_python"
+name = "ssim-python"
 version = "0.1.0"
 description = ""
 authors = ["yamamura-k <yamayama23bb@gmail.com>"]
@@ -13,6 +13,7 @@ numpy = "^1.26.4"
 cython = "^3.0.10"
 pytorch-memlab = "^0.3.0"
 
+
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
 isort = "^5.13.2"
@@ -22,28 +23,5 @@ matplotlib = "^3.9.0"
 pytest = "^8.2.1"
 
 [build-system]
-requires = ["setuptools", "wheel", "Cython", "torch", "numpy"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.package-data]
-"ssim_python/lib" = ["*.pyx", "*.cpp"]
-
-[[tool.setuptools.extension]]
-name = "lib_cython_0"
-sources = ["ssim_python/lib/lib_cython_0.pyx"]
-include-dirs = ["get_include()"]
-
-[[tool.setuptools.extension]]
-name = "lib_cython_1"
-sources = ["ssim_python/lib/lib_cython_1.pyx"]
-include-dirs = ["get_include()"]
-
-[[tool.setuptools.extension]]
-name = "lib_cython_2"
-sources = ["ssim_python/lib/lib_cython_2.pyx"]
-include-dirs = ["get_include()"]
-
-[[tool.setuptools.extension]]
-name = "libcpp"
-sources = ["ssim_python/lib/libcpp.cpp"]
-include-dirs = ["cpp_extension.include_paths()"]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
